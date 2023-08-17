@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/h5ptranslate/db" VERSION="20230816" COMMENT="XMLDB file for Moodle local/h5ptranslate"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_h5ptranslate" COMMENT="Default comment for local_h5ptranslate, please edit me">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="h5pid" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="h5p id"/>
+        <FIELD NAME="lang" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="language code"/>
+        <FIELD NAME="transcontent" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="the translated version of the jsoncontent in h5p table"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="h5pid_h5p_id" TYPE="foreign" FIELDS="h5pid" REFTABLE="h5p" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
