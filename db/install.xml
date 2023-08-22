@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/h5ptranslate/db" VERSION="20230816" COMMENT="XMLDB file for Moodle local/h5ptranslate"
+<XMLDB PATH="local/h5ptranslate/db" VERSION="20230819" COMMENT="XMLDB file for Moodle local/h5ptranslate"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -10,6 +10,7 @@
         <FIELD NAME="h5pid" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="h5p id"/>
         <FIELD NAME="lang" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="language code"/>
         <FIELD NAME="transcontent" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="the translated version of the jsoncontent in h5p table"/>
+        <FIELD NAME="paramshash" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="content hash derived from params json encode"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -25,6 +25,8 @@ namespace local_h5ptranslate;
 
 defined('MOODLE_INTERNAL') || die;
 
+use local_h5ptranslate\deepltranslate;
+
 
 class h5ptranslate {
     public static function echo_hello() {
@@ -74,15 +76,14 @@ class h5ptranslate {
 
 
     // USED check value for translatable text and tag variables in string with notranslation
-    public static function markTransStrings ($arr, $ignore_tags = array(), &$allmatches = array()) {
-    
+    public static function markNextractTransStrings ($arr, $ignore_tags = array(), &$allmatches = array()) {
+        echo '<br>in markNextractTransStrings ';
         foreach ($arr as $key => &$val) {
-            if (is_array($val) || is_object($val)) {
-                
-                $cval = $val;
-                $allmatches = array_merge($allmatches,self::markTransStrings($cval,$ignore_tags));
-            } else {
-                if(!in_array($key,$ignore_tags)) {
+             if (is_array($val) || is_object($val)) {                
+                 $cval = $val;
+                 $allmatches = array_merge($allmatches,self::markNextractTransStrings($cval,$ignore_tags));
+             } else {
+                 if(!in_array($key,$ignore_tags)) {
                     if(self::isText($val)) {
                         // keep for translation
                         $newval = self::xmlTagVariables($val);
@@ -91,12 +92,12 @@ class h5ptranslate {
                         $nkey = 'trans' . $rndind;
                         $allmatches[$nkey] = $newval;
                         $val = 'trans' . $rndind;
-                    }
-                }
-            }
+                     }
+                 }
+             }
         }
         unset($val);
-        //var_dump($allmatches);
+        var_dump($allmatches);
         return($allmatches);
     }
 
@@ -128,7 +129,12 @@ class h5ptranslate {
     public static function repreprocessing($str) {
         $str = str_replace("<newline />",'\n', $str);
         $str = str_replace("<newtab />",'\t', $str);
-       // $str = str_replace("/","\/", $str);
+        //$str = htmlentities($str);
+        //$str = json_encode($str);
+        //$str = str_replace("/","\/", $str);
+        $str = str_replace("\'","'", $str);
+        $str = str_replace("/","\/", $str);
+
         return($str);
     }
     
@@ -152,6 +158,7 @@ class h5ptranslate {
     
         foreach($combmatched as $key => $value) {
             echo "key: " . $key . " - " . "value:" . $value . "<br>";
+            // for quote doublequote backslashes 
             $value = addslashes($value);
             $value = self::removeXmlVariableTag($value);
             $value = self::repreprocessing($value);
@@ -161,15 +168,20 @@ class h5ptranslate {
         return($contentJsonEncoded);
     }
         
-    public static function writeTranslationToDB ($h5pId, $lang, $transContent) {
+    public static function writeTranslationToDB ($h5pId, $lang, $transContent, $paramshash) {
         global $DB;
 
         // Check if the record already exists
-        $existingRecord = $DB->get_record('local_h5ptranslate', ['h5pid' => $h5pId, 'lang' => $lang]);
+        if($h5pId !== NULL) {
+            $existingRecord = $DB->get_record('local_h5ptranslate', ['h5pid' => $h5pId, 'lang' => $lang]);
+        } else {
+            $existingRecord = FALSE;
+        }
 
         if ($existingRecord) {
             // Update the existing record
             $existingRecord->transcontent = $transContent;
+            $existingRecord->paramshash = $paramshash;
             $DB->update_record('local_h5ptranslate', $existingRecord);
             echo "Data updated successfully!";
         } else {
@@ -178,12 +190,99 @@ class h5ptranslate {
             $data->h5pid = $h5pId;
             $data->lang = $lang;
             $data->transcontent = $transContent;
+            $data->paramshash = $paramshash;
             $DB->insert_record('local_h5ptranslate', $data);
             echo "Data inserted successfully!";
         }
     }
 
+    public static function createArrayFromReference(&$variable) {
+        return $variable;
+    }
+    
+    
+    public static function h5ptranslate(&$contentjson, $lang, $id = NULL) {
+        global $DB;
+        echo "<h1> in h5ptranslate function contentjson</h1>";
+        print_r($contentjson);
+        $contentJsonCopy = self::createArrayFromReference($contentjson);
 
+        // create params hash for faster string match - Params json encoded hashed
+        // needs to be done in alter_filter
+        echo "<h1> Params json encoded hashed</h1>";
+        $parametersenc = json_encode($contentJsonCopy);
+        $paramshash = \file_storage::hash_from_string($parametersenc);
+        echo "<br>" . $paramshash ."<br>";
+        
+        # 0463c9feb6d6aefef9be2e2840678df5c60456b9 filtered V 
+        # Es gibt auch filtered NULL - filtered wird belegt, wenn die Aktivität dargestellt wurde. 
+        # Es ist die sichere Version des json Inhaltes.
+        # Ist die sichere Version - $parameters ist immer filtered 
+        # der Hash passt nur leider nicht . das mus ein anderes hashen sein als file_storage::hash_from_string
+        # also 
+        # 128b30437f0c59e7d2b5385487f6cfc650950010 content
+        # 651f4be336228cab75d9507470d4079fa27960cd database
+        # 0463c9feb6d6aefef9be2e2840678df5c60456b9 renderer hash parameters
+
+        // set array for ignore tag - might be an option
+        $ignore_tags = array('library','buttonSize','decorative','contentName','path','mime','image',
+        'copyright','subContentId','contentType','license','alwaysDisplayComments','buttonSize','goToSlideType','shape','type','borderStyle',
+        'quizType','arithmeticType','equationType','useFractions','maxQuestions','nattx',
+        'licenseVersion','fillColor','borderColor','subContentId','borderWidth','borderColor','borderRadius','borderStyle','borderWidth','contentName','name','buttonSize','playerMode','url',
+        'color', 'iconType', 'icon', 'iconSize', 'iconColor', 'iconBackgroundColor', 'iconBackgroundOpacity', 'iconOpacity', 'iconPosition', 'iconAlign', 'iconVerticalAlign', 'iconMargin', 'iconMarginTop', 'iconMarginBottom', 'iconMarginLeft', 'iconMarginRight', 'iconPadding');
+
+        echo "<h1> strings marked and collected</h1>";
+        print_r($contentJsonCopy);
+        // mark strings in array by reference and collect string in returned array
+        $jsonstringPrepArray = self::markNextractTransStrings($contentJsonCopy, $ignore_tags);
+        print_r($jsonstringPrepArray);
+        echo "<br><br>";
+        echo "<h1> JSON Content after marking </h1>";
+        print_r($contentJsonCopy);
+
+        // XML Version of strings for better perfomance and single call for DeepL API
+        echo "<h1> XMLed </h1>";
+        $jsonstringPrep = self::flatarrayToXml2($jsonstringPrepArray);
+        $jsonstringPrep = html_entity_decode($jsonstringPrep);
+        print_r($jsonstringPrep);
+
+        echo "<h1> Translation </h1>";
+        // api key from config not working - it's working now
+        //$apiKey = get_config('local_h5ptranslate','deeplapikey');
+        //echo "<h1> apikey </h1>" . $apiKey ;
+     
+        $translation = deepltranslate::transWithDeeplXML($jsonstringPrep, $lang);
+        //DEBUG $translation = array();
+        print_r($translation);
+
+        // NICHT LÖSCHEN Achtung, das ist die Übersetzung, die schon funtioniert hat und wieder funktionieren sollte.
+        // replace translated strings in json format, to prevent array looping 
+        $contentJsonEncoded = json_encode($contentJsonCopy);
+        echo "<h1> contentJsonEncoded for replacetranstags </h1>";
+        print_r($contentJsonEncoded);
+
+        $transcontentJsonEncoded = self::replaceTransTags($contentJsonEncoded, $translation);   
+        echo "<h1> Translated hier</h1>";
+        print_r($transcontentJsonEncoded);
+
+        echo "<h1> ready to write to DB </h1>";
+
+
+        //echo "<h1> Param filtered hashed</h1>";
+        // nee geht auch nicht
+        // $config = new stdClass();
+        // $h5pplayer = new player('', $config);
+        // $safeparams = $h5pplayer->core->filterParameters($parameters);
+        // $decodedparams = json_decode($safeparams);
+
+        //$h5pplayer->filter_parameter($parameters);
+        //$paramshash = file_storage::hash_from_string($parameters);
+        //echo "<br>" . $paramshash ."<br>";
+
+        // for DEBUGGIN OFF
+       self::writeTranslationToDB ($id, $lang, $transcontentJsonEncoded, $paramshash);
+
+    }
 }
 
 

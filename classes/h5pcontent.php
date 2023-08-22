@@ -88,7 +88,7 @@ defined('MOODLE_INTERNAL') || die;
                 echo '<td>' . htmlspecialchars($record->jsoncontent) . '</td>';
                 echo '</tr>';
             echo '</table>';
-            return($record->jsoncontent);
+            return($record);
         } else {
             echo 'No H5P records found.';
         }

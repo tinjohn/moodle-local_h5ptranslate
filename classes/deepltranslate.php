@@ -46,11 +46,11 @@ class deepltranslate {
     }
 
     // USED (debugoff) translation with Deepl of flatten lang text array as json string
-    public static function transWithDeeplXML ($string, $trglang, $authKey) {
+    public static function transWithDeeplXML ($string, $trglang) {
         // https://www.deepl.com/docs-api/translate-text/
         echo "<h1> -- translate with Deepl -- </h1>"; 
         // Replace [yourAuthKey] with your actual DeepL API authentication key
-        //$authKey = self::getAPIkey();
+        $authKey = self::getAPIkey();
         echo "<h1> KEY <h1>" . $authKey;
        
         //$authKey = 'for-debugging-off';
