@@ -65,8 +65,11 @@ class theme_learnr_core_h5p_renderer extends \core_h5p\output\renderer {
 
         //echo '<br>' . $h5pContentId . '<br>';
         $trglang = current_language();
+        if($trglang == "de") {
+            return;
+        }
         // Get the current language code.        
-        echo "current lang:" . $trglang . '<br>';
+        echo "current lang:" . $trglang;
         
         // DEBUG return;
 
@@ -98,31 +101,32 @@ class theme_learnr_core_h5p_renderer extends \core_h5p\output\renderer {
         $parametersenc = json_encode($parameters);
         //echo "in renderers.php parameters &array encoded: ".  $parametersenc;
         $paramshash = file_storage::hash_from_string($parametersenc);
-        echo "<br> paramshash " . $paramshash ."<br><br>";
+        echo " - paramshash " . $paramshash;
                 
        // print_r($parameters);
    
        // get translated params from db
         //a working query for reference $h5pRecords = $DB->get_records('h5p', [], 'id ASC');
         $newRecord = FALSE;
-        $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ?";
-        $h5pRecord = $DB->get_record_sql($sql, [$paramshash]);
+        $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ? AND lang = ?";
+        $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
 
         if(!$h5pRecord) {
-            echo "no record found - try to translate onthefly";
+            echo " - no record found - try to translate onthefly";
             h5ptranslate::h5ptranslate($parameters, $trglang);
-            $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ?";
-            $h5pRecord = $DB->get_record_sql($sql, [$paramshash]);
+            $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ? AND lang = ?";
+            $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
             $newRecord = TRUE;
         }
         if ($h5pRecord || $newRecord) {
+            echo "- load transversion";
             //echo "<h1>newparams json</h1>";
             //print_r($h5pRecord->transcontent);
             $parameterstrans = json_decode($h5pRecord->transcontent);
-            echo "<h1>newparams json decoded</h1>";
-            print_r($parameterstrans);
-            echo "<h1>orgparams</h1>";
-            print_r($parameters);
+            //echo "<h1>newparams json decoded</h1>";
+            //print_r($parameterstrans);
+            //echo "<h1>orgparams</h1>";
+            //print_r($parameters);
             $parameters = $parameterstrans;
         } else {
             echo "no translation available";
@@ -184,9 +188,9 @@ class theme_learnr_core_h5p_renderer extends \core_h5p\output\renderer {
        // $h5pContentId = $currentPlayer->contentId; 
 
         //echo '<br>' . $h5pContentId . '<br>';
-        $trglang = current_language();
+        //$trglang = current_language();
         // Get the current language code.        
-         echo "current lang:" . $trglang . '<br>';
+         //echo "current lang:" . $trglang . '<br>';
          //print_r($parameters);
 
          //$conthash = sha1($jsencoded ?? '');
@@ -200,7 +204,7 @@ class theme_learnr_core_h5p_renderer extends \core_h5p\output\renderer {
         //     }
         //  }
          
-        echo "<br>h5p filter finishd / off - name" . $name . "<br>";
+        //echo "<br>h5p filter finishd / off - name" . $name . "<br>";
         return;
 
         //     // parameter is an array pointer od decoded json in content.json stored to database/mdl_h5p
