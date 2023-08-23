@@ -30,7 +30,7 @@ use local_h5ptranslate\deepltranslate;
 
 class h5ptranslate {
     public static function echo_hello() {
-        echo "hello";
+        //debugecho  "hello";
     }
 
     public static function isText($str) {
@@ -38,17 +38,17 @@ class h5ptranslate {
         // :string
         // boolean
         // number
-        echo '<br><span style="color:black;"> text ' . $str . '</span>';
+        //debugecho  '<br><span style="color:black;"> text ' . $str . '</span>';
         if(!is_string($str)) {
-            echo '<span style="color:orange;"> kein String </span><br>';
+            //debugecho  '<span style="color:orange;"> kein String </span><br>';
             return false;
         } 
         if(ctype_cntrl($str)) {
-            echo '<span style="color:orange;"> ist Controllcharacter </span><br>'; 
+            //debugecho  '<span style="color:orange;"> ist Controllcharacter </span><br>'; 
             return false;
         }
         if($str == "") {
-            echo '<span style="color:orange;"> ist leer </span><br>'; 
+            //debugecho  '<span style="color:orange;"> ist leer </span><br>'; 
             return false;
         }
         // paths via tag
@@ -56,7 +56,7 @@ class h5ptranslate {
         //     echo '<span style="color:orange;"> ist ein Pfad' . json_encode($matches) .  '</span><br>';
         //     return false;
         // }  
-        echo '<span style="color:green;"> ist text.</span><br>';
+        //debugecho  '<span style="color:green;"> ist text.</span><br>';
     
         return true;
     }
@@ -74,10 +74,51 @@ class h5ptranslate {
         return($str);
     }
 
+    public static function isArrayAssociative($arr) {
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+    
+    public static function processNestedArray(&$arr, $ignore_tags = array(), &$allmatches = array()) {
+        foreach ($arr as $key => &$val) {
+            if (is_array($val) || is_object($val)) {
+                self::processNestedObjectOrArray($val, $ignore_tags, $allmatches);
+            } else {
+                self::processSingleValue($key, $val, $ignore_tags, $allmatches);
+            }
+        }
+        unset($val);
+        return $allmatches;
+    }
+    
+    public static function processNestedObjectOrArray(&$nestedVal, $ignore_tags, &$allmatches) {
+        if (is_array($nestedVal) && !self::isArrayAssociative($nestedVal)) {
+            // Process non-associative array
+            // No modifications needed for non-associative arrays
+            self::processNestedArray($nestedVal, $ignore_tags, $allmatches);
+        } else {
+            // Process nested object or associative array
+            self::processNestedArray($nestedVal, $ignore_tags, $allmatches);
+        }
+    }
+    
+    public static function processSingleValue($key, &$val, $ignore_tags, &$allmatches) {
+        if (!in_array($key, $ignore_tags)) {
+            if (self::isText($val)) {
+                // Process single value
+                $newval = self::xmlTagVariables($val);
+                $rndind = rand();
+                $nkey = 'trans' . $rndind;
+                $allmatches[$nkey] = $newval;
+                $val = $nkey;
+            }
+        }
+    }
+    
 
-    // USED check value for translatable text and tag variables in string with notranslation
+
+    // NOT USED REPLACED BY PROCESS check value for translatable text and tag variables in string with notranslation
     public static function markNextractTransStrings ($arr, $ignore_tags = array(), &$allmatches = array()) {
-        echo '<br>in markNextractTransStrings ';
+        //debugecho  '<br>in markNextractTransStrings ';
         foreach ($arr as $key => &$val) {
              if (is_array($val) || is_object($val)) {                
                  $cval = $val;
@@ -140,24 +181,24 @@ class h5ptranslate {
     
 
     public static function replaceTransTags($contentJsonEncoded,$translation) {
-        echo "<h1> translation in replaceTransTags </h1>"; 
-        print_r($translation);
-        echo "ENDE <br>"; 
+        //debugecho  "<h1> translation in replaceTransTags </h1>"; 
+        //debugprint_r($translation);
+        //debugecho  "ENDE <br>"; 
         
         $pattern = '/<(trans\d+)>(.*?)<\/trans\d+>/';
         
         preg_match_all($pattern, $translation, $transmatches);
         $combmatched = array_combine($transmatches[1],$transmatches[2]);
         
-        print_r($combmatched);
+        //debugprint_r($combmatched);
         // foreach ($transmatches[2] as $match) {
         //     echo "Extracted text: $match <br>";
         // }     
-        echo "ENDE <br>"; 
+        //debugecho  "ENDE <br>"; 
     
     
         foreach($combmatched as $key => $value) {
-            echo "key: " . $key . " - " . "value:" . $value . "<br>";
+            //debugecho  "key: " . $key . " - " . "value:" . $value . "<br>";
             // for quote doublequote backslashes 
             $value = addslashes($value);
             $value = self::removeXmlVariableTag($value);
@@ -183,7 +224,7 @@ class h5ptranslate {
             $existingRecord->transcontent = $transContent;
             $existingRecord->paramshash = $paramshash;
             $DB->update_record('local_h5ptranslate', $existingRecord);
-            echo "Data updated successfully!";
+            //debugecho  "Data updated successfully!";
         } else {
             // Insert a new record
             $data = new \stdClass();
@@ -192,7 +233,7 @@ class h5ptranslate {
             $data->transcontent = $transContent;
             $data->paramshash = $paramshash;
             $DB->insert_record('local_h5ptranslate', $data);
-            echo "Data inserted successfully!";
+            //debugecho  "Data inserted successfully!";
         }
     }
 
@@ -203,16 +244,16 @@ class h5ptranslate {
     
     public static function h5ptranslate(&$contentjson, $lang, $id = NULL) {
         global $DB;
-        echo "<h1> in h5ptranslate function contentjson</h1>";
-        print_r($contentjson);
+        //debugecho  "<h1> in h5ptranslate function contentjson</h1>";
+        //debugprint_r($contentjson);
         $contentJsonCopy = self::createArrayFromReference($contentjson);
 
         // create params hash for faster string match - Params json encoded hashed
         // needs to be done in alter_filter
-        echo "<h1> Params json encoded hashed</h1>";
+        //debugecho  "<h1> Params json encoded hashed</h1>";
         $parametersenc = json_encode($contentJsonCopy);
         $paramshash = \file_storage::hash_from_string($parametersenc);
-        echo "<br>" . $paramshash ."<br>";
+        //debugecho  "<br>" . $paramshash ."<br>";
         
         # 0463c9feb6d6aefef9be2e2840678df5c60456b9 filtered V 
         # Es gibt auch filtered NULL - filtered wird belegt, wenn die Aktivität dargestellt wurde. 
@@ -231,41 +272,46 @@ class h5ptranslate {
         'licenseVersion','fillColor','borderColor','subContentId','borderWidth','borderColor','borderRadius','borderStyle','borderWidth','contentName','name','buttonSize','playerMode','url',
         'color', 'iconType', 'icon', 'iconSize', 'iconColor', 'iconBackgroundColor', 'iconBackgroundOpacity', 'iconOpacity', 'iconPosition', 'iconAlign', 'iconVerticalAlign', 'iconMargin', 'iconMarginTop', 'iconMarginBottom', 'iconMarginLeft', 'iconMarginRight', 'iconPadding');
 
-        echo "<h1> strings marked and collected</h1>";
-        print_r($contentJsonCopy);
+        //debugecho  "<h1> strings marked and collected</h1>";
+        //debugprint_r($contentJsonCopy);
         // mark strings in array by reference and collect string in returned array
-        $jsonstringPrepArray = self::markNextractTransStrings($contentJsonCopy, $ignore_tags);
+        //$jsonstringPrepArray = self::markNextractTransStrings($contentJsonCopy, $ignore_tags);
+        //$jsonstringPrepArray = self::markNextractTransStrings($contentJsonCopy, $ignore_tags);
+        $jsonstringPrepArray = array();
+        $jsonstringPrepArray = self::processNestedArray($contentJsonCopy, $ignore_tags, $jsonstringPrepArray);
+
+        //debug
         print_r($jsonstringPrepArray);
-        echo "<br><br>";
-        echo "<h1> JSON Content after marking </h1>";
-        print_r($contentJsonCopy);
+        //debugecho  "<br><br>";
+        //debugecho  "<h1> JSON Content after marking </h1>";
+        //debugprint_r($contentJsonCopy);
 
         // XML Version of strings for better perfomance and single call for DeepL API
-        echo "<h1> XMLed </h1>";
+        //debugecho  "<h1> XMLed </h1>";
         $jsonstringPrep = self::flatarrayToXml2($jsonstringPrepArray);
         $jsonstringPrep = html_entity_decode($jsonstringPrep);
-        print_r($jsonstringPrep);
+        //debugprint_r($jsonstringPrep);
 
-        echo "<h1> Translation </h1>";
+        //debugecho  "<h1> Translation </h1>";
         // api key from config not working - it's working now
         //$apiKey = get_config('local_h5ptranslate','deeplapikey');
         //echo "<h1> apikey </h1>" . $apiKey ;
      
         $translation = deepltranslate::transWithDeeplXML($jsonstringPrep, $lang);
         //DEBUG $translation = array();
-        print_r($translation);
+        //debugprint_r($translation);
 
         // NICHT LÖSCHEN Achtung, das ist die Übersetzung, die schon funtioniert hat und wieder funktionieren sollte.
         // replace translated strings in json format, to prevent array looping 
         $contentJsonEncoded = json_encode($contentJsonCopy);
-        echo "<h1> contentJsonEncoded for replacetranstags </h1>";
-        print_r($contentJsonEncoded);
+        //debugecho  "<h1> contentJsonEncoded for replacetranstags </h1>";
+        //debugprint_r($contentJsonEncoded);
 
         $transcontentJsonEncoded = self::replaceTransTags($contentJsonEncoded, $translation);   
-        echo "<h1> Translated hier</h1>";
-        print_r($transcontentJsonEncoded);
+        //debugecho  "<h1> Translated hier</h1>";
+        //debugprint_r($transcontentJsonEncoded);
 
-        echo "<h1> ready to write to DB </h1>";
+        //debugecho  "<h1> ready to write to DB </h1>";
 
 
         //echo "<h1> Param filtered hashed</h1>";
