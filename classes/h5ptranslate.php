@@ -138,7 +138,7 @@ class h5ptranslate {
              }
         }
         unset($val);
-        var_dump($allmatches);
+        //debug var_dump($allmatches);
         return($allmatches);
     }
 
@@ -241,7 +241,47 @@ class h5ptranslate {
         return $variable;
     }
     
-    
+    public static function geth5ptranslation(&$parameters, $id = NULL) {
+        global $DB;
+        //debug echo '<script>console.log("geth5ptranslation: in here");</script>';
+        $trglang = current_language();
+        $notranslang = get_config('local_h5ptranslate','notranslationforlang');
+        if($trglang == $notranslang) {
+            echo '<script>console.log("geth5ptranslation: de - standard no translation");</script>';
+            return;
+        }
+
+        $jsencoded = json_encode($parameters);
+        $parametersenc = json_encode($parameters);
+        $paramshash = \file_storage::hash_from_string($parametersenc);
+
+        // get translated params from db
+        $newRecord = FALSE;
+        $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ? AND lang = ?";
+        $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
+
+        if(!$h5pRecord) {
+            echo '<script>console.log("geth5ptranslation: no record found - try to translate onthefly");</script>';
+            self::h5ptranslate($parameters, $trglang);
+            $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ? AND lang = ?";
+            $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
+            if($h5pRecord) {
+                $newRecord = TRUE;
+            }
+        } 
+        if ($h5pRecord || $newRecord) {
+            $parameterstrans = json_decode($h5pRecord->transcontent);
+            if($parameterstrans != null)
+                // set parameters for h5p_alter_filtered_parameters
+                $parameters = $parameterstrans;
+            echo '<script>console.log("geth5ptranslation: paramters set new");</script>';            
+        } else {
+            echo '<script>console.log("No translation available: check Deepl API Key and URl");</script>';            
+            debugging("No translation available: check Deepl API Key and URl", DEBUG_DEVELOPER);
+        }
+        return;
+    }
+
     public static function h5ptranslate(&$contentjson, $lang, $id = NULL) {
         global $DB;
         //debugecho  "<h1> in h5ptranslate function contentjson</h1>";
@@ -270,7 +310,8 @@ class h5ptranslate {
         'copyright','subContentId','contentType','license','alwaysDisplayComments','buttonSize','goToSlideType','shape','type','borderStyle',
         'quizType','arithmeticType','equationType','useFractions','maxQuestions','nattx',
         'licenseVersion','fillColor','borderColor','subContentId','borderWidth','borderColor','borderRadius','borderStyle','borderWidth','contentName','name','buttonSize','playerMode','url',
-        'color', 'iconType', 'icon', 'iconSize', 'iconColor', 'iconBackgroundColor', 'iconBackgroundOpacity', 'iconOpacity', 'iconPosition', 'iconAlign', 'iconVerticalAlign', 'iconMargin', 'iconMarginTop', 'iconMarginBottom', 'iconMarginLeft', 'iconMarginRight', 'iconPadding');
+        'color', 'iconType', 'icon', 'iconSize', 'iconColor', 'iconBackgroundColor', 'iconBackgroundOpacity', 'iconOpacity', 'iconPosition', 'iconAlign', 'iconVerticalAlign', 'iconMargin', 'iconMarginTop', 'iconMarginBottom', 'iconMarginLeft', 'iconMarginRight', 'iconPadding',
+        'textTracks','videoTrack','srcLang','track','path','mime','kind');
 
         //debugecho  "<h1> strings marked and collected</h1>";
         //debugprint_r($contentJsonCopy);
@@ -280,8 +321,7 @@ class h5ptranslate {
         $jsonstringPrepArray = array();
         $jsonstringPrepArray = self::processNestedArray($contentJsonCopy, $ignore_tags, $jsonstringPrepArray);
 
-        //debug
-        print_r($jsonstringPrepArray);
+        //debug print_r($jsonstringPrepArray);
         //debugecho  "<br><br>";
         //debugecho  "<h1> JSON Content after marking </h1>";
         //debugprint_r($contentJsonCopy);
@@ -298,8 +338,10 @@ class h5ptranslate {
         //echo "<h1> apikey </h1>" . $apiKey ;
      
         $translation = deepltranslate::transWithDeeplXML($jsonstringPrep, $lang);
+       
+        
         //DEBUG $translation = array();
-        //debugprint_r($translation);
+        //print_r($translation);
 
         // NICHT LÖSCHEN Achtung, das ist die Übersetzung, die schon funtioniert hat und wieder funktionieren sollte.
         // replace translated strings in json format, to prevent array looping 
@@ -326,8 +368,12 @@ class h5ptranslate {
         //echo "<br>" . $paramshash ."<br>";
 
         // for DEBUGGIN OFF
-       self::writeTranslationToDB ($id, $lang, $transcontentJsonEncoded, $paramshash);
-
+        if($jsonstringPrep == $translation) {
+            // error handling - reset content 
+            $contentjson = json_decode($transcontentJsonEncoded);
+            return;
+        }
+        self::writeTranslationToDB ($id, $lang, $transcontentJsonEncoded, $paramshash);
     }
 }
 

@@ -43,7 +43,21 @@
              new lang_string('deeplapikey_desc', 'local_h5ptranslate'),
              PARAM_TEXT
         )); 
-     }
+        $settingspage->add(new admin_setting_configtext(
+            'local_h5ptranslate/deeplapiUrl',
+            new lang_string('deeplapiurl', 'local_h5ptranslate'),
+            new lang_string('deeplapiurl_desc', 'local_h5ptranslate'), 
+            'https://api-free.deepl.com/v2/translate',
+            PARAM_TEXT
+        )); 
+        $settingspage->add(new admin_setting_configtext(
+            'local_h5ptranslate/notranslationforlang',
+            new lang_string('notranslationforlang', 'local_h5ptranslate'),
+            new lang_string('notranslationforlang_desc', 'local_h5ptranslate'),
+            'de',
+            PARAM_TEXT
+        )); 
+    }
      $ADMIN->add('localh5ptranslatefolder', $settingspage);
 
  }

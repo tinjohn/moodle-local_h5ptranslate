@@ -31,34 +31,48 @@ class deepltranslate {
     public static function getAPIkey () {
         // Ensure the configurations for this site are set
         $settings = get_config('local_h5ptranslate');
-        var_dump($settings);
+        //debug var_dump($settings);
         
             // Check if the API key setting exists - not working
             $apiKey = get_config('local_h5ptranslate','deeplapikey');
             if($apiKey) {
-                    // Use the API key
-                echo "API Key: " . $apiKey;
                 return $apiKey;
             } else {
                 return "not set yet";
-            }
-        
+            }        
     }
-
+    public static function getAPIurl () {
+        // Ensure the configurations for this site are set
+        $settings = get_config('local_h5ptranslate');
+        //debug var_dump($settings);
+        
+            // Check if the API key setting exists - not working
+            $apiUrl = get_config('local_h5ptranslate','deeplapiUrl');
+            if($apiUrl) {
+                return $apiUrl;
+            } else {
+                return "not set yet";
+            }        
+    }
     // USED (debugoff) translation with Deepl of flatten lang text array as json string
     public static function transWithDeeplXML ($string, $trglang) {
         // https://www.deepl.com/docs-api/translate-text/
-        echo "<h1> -- translate with Deepl -- </h1>"; 
+       // tinjohn-article echo "<h1> -- translate with Deepl -- </h1>"; 
         // Replace [yourAuthKey] with your actual DeepL API authentication key
         $authKey = self::getAPIkey();
-        echo "<h1> KEY <h1>" . $authKey;
-       
+        //debug echo "<h1> local h5ptranslate deepltranslate KEY <h1>" . $authKey;
         //$authKey = 'for-debugging-off';
         if($authKey == 'for-debugging-off' || $authKey == 'not set yet') {
-            echo "<h1 style='color: red;'> DeepL API key is: " . $authKey . "</h1>";
+            //debug echo "<h1 style='color: red;'> DeepL API key is: " . $authKey . "</h1>";
             return $string;
         }
-        $apiUrl = 'https://api-free.deepl.com/v2/translate';
+
+        $apiUrl = self::getAPIurl();
+        if($apiUrl == 'for-debugging-off' || $apiUrl == 'not set yet') {
+            //debug echo "<h1 style='color: red;'> Deepl API URL is: " . $apiUrl . "</h1>";
+            return $string;
+        }
+        //$apiUrl = 'https://api-free.deepl.com/v2/translate';
 
         // Data to be translated and target language
         $data = array(
@@ -67,7 +81,8 @@ class deepltranslate {
             'tag_handling' => 'xml',
             'ignore_tags' => array('library','buttonSize','decorative','contentName','path','mime','image',
             'copyright','subContentId','contentType','license','alwaysDisplayComments','buttonSize','goToSlideType','shape','type','borderStyle',
-            'quizType','arithmeticType','equationType','useFractions','maxQuestions','nattx','notranslation')
+            'quizType','arithmeticType','equationType','useFractions','maxQuestions','nattx','notranslation',
+            'textTracks','srclang','track','path','mime')
         );
 
         // Convert data to JSON format
@@ -75,6 +90,11 @@ class deepltranslate {
 
         // Initialize cURL session
         $ch = curl_init();
+        // Check for cURL errors
+        if (curl_errno($ch)) {
+            echo 'cURL Error: ' . curl_error($ch);
+            return($string);
+        }
 
         // Set cURL options
         curl_setopt($ch, CURLOPT_URL, $apiUrl);
@@ -92,6 +112,7 @@ class deepltranslate {
         // Check for cURL errors
         if (curl_errno($ch)) {
             echo 'cURL Error: ' . curl_error($ch);
+            return($string);
         }
 
         // Close cURL session
