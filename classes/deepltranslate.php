@@ -123,7 +123,7 @@ class deepltranslate {
 
         // Output the translated text
         if (isset($translatedData['translations'][0]['text'])) {
-            echo " ------ remove the . in json file --------";
+            //echo " ------ remove the . in json file --------";
             $newstring = $translatedData['translations'][0]['text'];
             $newstring = trim($newstring, ".");
             return($newstring);
