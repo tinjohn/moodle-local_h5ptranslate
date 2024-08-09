@@ -41,6 +41,7 @@
              'local_h5ptranslate/deeplapikey',
              new lang_string('deeplapikey', 'local_h5ptranslate'),
              new lang_string('deeplapikey_desc', 'local_h5ptranslate'),
+             'not set yet',
              PARAM_TEXT
         )); 
         $settingspage->add(new admin_setting_configtext(
