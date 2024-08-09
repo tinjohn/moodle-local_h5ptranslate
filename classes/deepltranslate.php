@@ -92,7 +92,8 @@ class deepltranslate {
         $ch = curl_init();
         // Check for cURL errors
         if (curl_errno($ch)) {
-            echo 'cURL Error: ' . curl_error($ch);
+            //echo 'cURL Error: ' . curl_error($ch);
+            debugging("deepltranslate cURL Error while init", DEBUG_DEVELOPER);
             return($string);
         }
 
@@ -111,7 +112,8 @@ class deepltranslate {
 
         // Check for cURL errors
         if (curl_errno($ch)) {
-            echo 'cURL Error: ' . curl_error($ch);
+            //echo 'cURL Error: ' . curl_error($ch);
+            debugging("deepltranslate cURL Error", DEBUG_DEVELOPER);
             return($string);
         }
 

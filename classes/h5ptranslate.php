@@ -247,7 +247,7 @@ class h5ptranslate {
         $trglang = current_language();
         $notranslang = get_config('local_h5ptranslate','notranslationforlang');
         if($trglang == $notranslang) {
-            echo '<script>console.log("geth5ptranslation: de - standard no translation");</script>';
+            //echo '<script>console.log("geth5ptranslation: de - standard no translation");</script>';
             return;
         }
 
@@ -261,7 +261,7 @@ class h5ptranslate {
         $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
 
         if(!$h5pRecord) {
-            echo '<script>console.log("geth5ptranslation: no record found - try to translate onthefly");</script>';
+            //echo '<script>console.log("geth5ptranslation: no record found - try to translate onthefly");</script>';
             self::h5ptranslate($parameters, $trglang);
             $sql = "SELECT transcontent FROM {local_h5ptranslate} WHERE paramshash = ? AND lang = ?";
             $h5pRecord = $DB->get_record_sql($sql, [$paramshash, $trglang]);
@@ -274,10 +274,10 @@ class h5ptranslate {
             if($parameterstrans != null)
                 // set parameters for h5p_alter_filtered_parameters
                 $parameters = $parameterstrans;
-            echo '<script>console.log("geth5ptranslation: paramters set new");</script>';            
+            //echo '<script>console.log("geth5ptranslation: paramters set new");</script>';            
         } else {
-            echo '<script>console.log("No translation available: check Deepl API Key and URl");</script>';            
-            debugging("No translation available: check Deepl API Key and URl", DEBUG_DEVELOPER);
+            //echo '<script>console.log("No translation available: check Deepl API Key and URl");</script>';            
+            debugging("No translation available: check Deepl API Key and URl", DEBUG_NORMAL);
         }
         return;
     }
